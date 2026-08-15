@@ -3,35 +3,34 @@ package database
 import (
 	"context"
 	"fmt"
+	"time"
 
-	"github.com/jackc/pgx/v5/pgxpool"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+
 	"github.com/pri-laxmi/MailFlow/configs"
 )
 
-// ConnectDB connects to PostgreSQL using environment variables.
-// Expected env vars: DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME, DB_SSLMODE
-func ConnectDB(cfg *configs.Config) (*pgxpool.Pool, error) {
-	connString := fmt.Sprintf(
-		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-		cfg.DBHost,
-		cfg.DBPort,
-		cfg.DBUser,
-		cfg.DBPassword,
-		cfg.DBName,
-		cfg.DBSSLMode,
+func NewPostgres(cfg *configs.Config) (*gorm.DB, error) {
+	db, err := gorm.Open(
+		postgres.Open(cfg.DatabaseURL),
+		&gorm.Config{},
 	)
 
-	db, err := pgxpool.New(context.Background(), connString)
 	if err != nil {
-		return nil, fmt.Errorf("unable to connect to database: %w", err)
+		return nil, fmt.Errorf("failed to connect to database: %w", err)
+	}
+	sqlDB, err := db.DB()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get database connection: %w", err)
 	}
 
-	err = db.Ping(context.Background())
-	if err != nil {
-		return nil, fmt.Errorf("database ping failed: %w", err)
-	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
-	fmt.Println("Connected to PostgreSQL!")
+	if err := sqlDB.PingContext(ctx); err != nil {
+		return nil, fmt.Errorf("failed to ping database: %w", err)
+	}
 
 	return db, nil
 }

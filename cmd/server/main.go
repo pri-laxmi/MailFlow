@@ -4,23 +4,37 @@ import (
 	"log"
 
 	"github.com/pri-laxmi/MailFlow/configs"
+	"github.com/pri-laxmi/MailFlow/internal/apis"
 	"github.com/pri-laxmi/MailFlow/internal/database"
+	"github.com/pri-laxmi/MailFlow/internal/models"
 )
 
 func main() {
+	//load config
 	cfg := configs.LoadConfig()
+	//connect to database
 	db, err := database.ConnectDB(cfg)
 	if err != nil {
 		log.Fatalf("failed to connect database: %v", err)
 	}
-	defer db.Close()
 
 	log.Println("Database connected successfully")
-	//router := gin.Default()//gin router
-	log.Println(" Server running")
+	if err := db.AutoMigrate(&models.User{}); err != nil {
+		log.Fatalf("failed to migrate database: %v", err)
+	}
+	//setup router
+	router := apis.SetRoutes(cfg, db)
+	port := getPort(cfg)
+	log.Printf("server running on port %s", port)
+	if err := router.Run(":" + port); err != nil {
+		log.Fatalf("failed to start server: %v", err)
+	}
 
-	/*if err := router.Run(":" + cfg.ServerPort); err != nil {
-		log.Fatal(err)
-	}*/
+}
 
+func getPort(cfg *configs.Config) string {
+	if cfg.Port == "" {
+		return "8080"
+	}
+	return cfg.Port
 }
