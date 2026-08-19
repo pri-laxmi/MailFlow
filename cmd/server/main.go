@@ -7,11 +7,13 @@ import (
 	"github.com/pri-laxmi/MailFlow/internal/apis"
 	"github.com/pri-laxmi/MailFlow/internal/database"
 	"github.com/pri-laxmi/MailFlow/internal/models"
+	"github.com/pri-laxmi/MailFlow/internal/utils"
 )
 
 func main() {
 	//load config
 	cfg := configs.LoadConfig()
+	jwtManager := utils.NewJWTManager(cfg.JWTSecret)
 	//connect to database
 	db, err := database.ConnectDB(cfg)
 	if err != nil {
@@ -23,7 +25,7 @@ func main() {
 		log.Fatalf("failed to migrate database: %v", err)
 	}
 	//setup router
-	router := apis.SetRoutes(cfg, db)
+	router := apis.SetRoutes(cfg, db, jwtManager)
 	port := getPort(cfg)
 	log.Printf("server running on port %s", port)
 	if err := router.Run(":" + port); err != nil {

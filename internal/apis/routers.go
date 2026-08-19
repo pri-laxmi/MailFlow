@@ -8,12 +8,12 @@ import (
 	"github.com/pri-laxmi/MailFlow/internal/handler"
 	"github.com/pri-laxmi/MailFlow/internal/repository"
 	"github.com/pri-laxmi/MailFlow/internal/service"
+	"github.com/pri-laxmi/MailFlow/internal/utils"
 )
 
-func RegisterRoutes(router *gin.Engine, cfg *configs.Config, db *gorm.DB) {
+func RegisterRoutes(router *gin.Engine, cfg *configs.Config, db *gorm.DB, jwtManager *utils.JWTManager) {
 	userRepo := repository.NewUserRepository(db)
-
-	authService := service.NewAuthService(userRepo)
+	authService := service.NewAuthService(userRepo, jwtManager)
 
 	authHandler := handler.NewAuthHandler(authService)
 	router.GET("/health", func(c *gin.Context) {
@@ -50,4 +50,5 @@ func RegisterRoutes(router *gin.Engine, cfg *configs.Config, db *gorm.DB) {
 		})
 	})
 	router.POST("/register", authHandler.Register)
+	router.POST("/login", authHandler.Login)
 }
