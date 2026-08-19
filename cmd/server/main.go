@@ -15,13 +15,13 @@ func main() {
 	cfg := configs.LoadConfig()
 	jwtManager := utils.NewJWTManager(cfg.JWTSecret)
 	//connect to database
-	db, err := database.ConnectDB(cfg)
+	db, err := database.NewPostgres(cfg)
 	if err != nil {
 		log.Fatalf("failed to connect database: %v", err)
 	}
 
 	log.Println("Database connected successfully")
-	if err := db.AutoMigrate(&models.User{}); err != nil {
+	if err := db.AutoMigrate(&models.User{}, &models.Contact{}); err != nil {
 		log.Fatalf("failed to migrate database: %v", err)
 	}
 	//setup router
@@ -35,8 +35,8 @@ func main() {
 }
 
 func getPort(cfg *configs.Config) string {
-	if cfg.Port == "" {
+	if cfg.ServerPort == "" {
 		return "8080"
 	}
-	return cfg.Port
+	return cfg.ServerPort
 }

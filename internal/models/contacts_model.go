@@ -1,14 +1,12 @@
 package models
 
-import (
-	"time"
-)
+import "time"
 
 type Contact struct {
-	id        uint      `gorm:"primaryKey;autoIncrement" json:"id"`
-	userId    uint      `gorm:"not null" json:"user_id"`
-	Name      string    `gorm:"not null" json:"name"`
-	Email     string    `gorm:"unique;not null" json:"email"`
-	CreatedAt time.Time `gorm:"not null" json:"created_at"`
-	UpdatedAt time.Time `gorm:"not null" json:"updated_at"`
+	ID        uint      `gorm:"primaryKey" json:"id"`
+	UserID    uint      `gorm:"not null;index" json:"user_id"`
+	Name      string    `gorm:"size:100;not null" json:"name"`
+	Email     string    `gorm:"size:255;not null" json:"email"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
