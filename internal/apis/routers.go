@@ -6,6 +6,7 @@ import (
 
 	"github.com/pri-laxmi/MailFlow/configs"
 	"github.com/pri-laxmi/MailFlow/internal/handler"
+	"github.com/pri-laxmi/MailFlow/internal/middlewares"
 	"github.com/pri-laxmi/MailFlow/internal/repository"
 	"github.com/pri-laxmi/MailFlow/internal/service"
 	"github.com/pri-laxmi/MailFlow/internal/utils"
@@ -14,8 +15,11 @@ import (
 func RegisterRoutes(router *gin.Engine, cfg *configs.Config, db *gorm.DB, jwtManager *utils.JWTManager) {
 	userRepo := repository.NewUserRepository(db)
 	authService := service.NewAuthService(userRepo, jwtManager)
-
 	authHandler := handler.NewAuthHandler(authService)
+
+	contactRepo := repository.NewContactRepository(db)
+	contactService := service.NewContactService(contactRepo)
+	contactHandler := handler.NewContactHandler(contactService)
 	router.GET("/health", func(c *gin.Context) {
 		sqlDB, err := db.DB()
 		if err != nil {
@@ -51,4 +55,11 @@ func RegisterRoutes(router *gin.Engine, cfg *configs.Config, db *gorm.DB, jwtMan
 	})
 	router.POST("/register", authHandler.Register)
 	router.POST("/login", authHandler.Login)
+	protected := router.Group("/")
+	protected.Use(middlewares.AuthMIddleware(jwtManager))
+	protected.POST("/contacts", contactHandler.Create)
+	protected.GET("/contacts", contactHandler.GetAll)
+	protected.GET("/contacts/:id", contactHandler.GetByID)
+	protected.PATCH("/contacts/:id", contactHandler.Update)
+	protected.DELETE("/contacts/:id", contactHandler.Delete)
 }

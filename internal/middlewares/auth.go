@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -41,8 +42,9 @@ func AuthMIddleware(jwtManager *utils.JWTManager) gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-
+		fmt.Printf("AUTHENTICATED USER: %v, TYPE: %T\n", userID, userID)
 		c.Set("user_id", userID)
+		fmt.Println("AUTHENTICATED USER:", userID)
 		c.Next()
 	}
 }

@@ -22,7 +22,7 @@ func NewContactHandler(contactService service.ContactService) *ContactHandler {
 	}
 }
 func getUserID(c *gin.Context) (uint, error) {
-	value,exists := c.Get("userID")
+	value, exists := c.Get("user_id")
 	if !exists {
 		return 0, errors.New("userID not found in context")
 	}
