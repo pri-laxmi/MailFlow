@@ -20,6 +20,11 @@ func RegisterRoutes(router *gin.Engine, cfg *configs.Config, db *gorm.DB, jwtMan
 	contactRepo := repository.NewContactRepository(db)
 	contactService := service.NewContactService(contactRepo)
 	contactHandler := handler.NewContactHandler(contactService)
+
+	templateRepo := repository.NewTemplateRepository(db)
+	templateService := service.NewTemplateService(templateRepo)
+	TemplateHandler := handler.NewTemplateHandler(templateService)
+
 	router.GET("/health", func(c *gin.Context) {
 		sqlDB, err := db.DB()
 		if err != nil {
@@ -57,9 +62,16 @@ func RegisterRoutes(router *gin.Engine, cfg *configs.Config, db *gorm.DB, jwtMan
 	router.POST("/login", authHandler.Login)
 	protected := router.Group("/")
 	protected.Use(middlewares.AuthMIddleware(jwtManager))
+
 	protected.POST("/contacts", contactHandler.Create)
 	protected.GET("/contacts", contactHandler.GetAll)
 	protected.GET("/contacts/:id", contactHandler.GetByID)
 	protected.PATCH("/contacts/:id", contactHandler.Update)
 	protected.DELETE("/contacts/:id", contactHandler.Delete)
+
+	protected.POST("/templates", TemplateHandler.Create)
+	protected.GET("/templates", TemplateHandler.GetAll)
+	protected.GET("/templates/:id", TemplateHandler.GetByID)
+	protected.PATCH("/templates/:id", TemplateHandler.Update)
+	protected.DELETE("/templates/:id", TemplateHandler.Delete)
 }

@@ -21,7 +21,11 @@ func main() {
 	}
 
 	log.Println("Database connected successfully")
-	if err := db.AutoMigrate(&models.User{}, &models.Contact{}, &models.Template{}); err != nil {
+	if err := db.AutoMigrate(
+		&models.User{},
+		&models.Contact{},
+		&models.Template{},
+		&models.Campaign{}); err != nil {
 		log.Fatalf("failed to migrate database: %v", err)
 	}
 	//setup router
