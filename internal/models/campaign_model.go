@@ -2,10 +2,13 @@ package models
 
 import "time"
 
+type Schedule struct {
+	draft string `json:"draft"`
+}
 type Campaign struct {
-	ID         uint       `gorm:"primaryKey" json:"id"`
-	UserID     uint       `gorm:"not null;index" json:"user_id"`
-	TemplateID uint       `gorm:"not null;index" json:"template_id"`
+	ID         uint `gorm:"primaryKey" json:"id"`
+	UserID     uint `gorm:"not null;index" json:"user_id"`
+	TemplateID uint `gorm:"not null;index" json:"template_id"`
 
 	Name        string     `gorm:"not null" json:"name"`
 	Status      string     `gorm:"not null;default:'draft'" json:"status"`
