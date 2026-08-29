@@ -5,6 +5,7 @@ import (
 
 	"github.com/pri-laxmi/MailFlow/internal/dto"
 	"github.com/pri-laxmi/MailFlow/internal/models"
+	"github.com/pri-laxmi/MailFlow/internal/queue"
 	"github.com/pri-laxmi/MailFlow/internal/repository"
 )
 
@@ -37,13 +38,26 @@ type CampaignService interface {
 
 type campaignService struct {
 	campaignRepo repository.CampaignRepository
+	contactRepo  repository.ContactRepository
+	jobRepo      repository.JobRepository
+	jobService   JobService
+	queue        *queue.Queue
 }
 
 func NewCampaignService(
 	campaignRepo repository.CampaignRepository,
+	contactRepo repository.ContactRepository,
+	jobRepo repository.JobRepository,
+	jobService JobService,
+	queue *queue.Queue,
 ) CampaignService {
+
 	return &campaignService{
 		campaignRepo: campaignRepo,
+		contactRepo:  contactRepo,
+		jobRepo:      jobRepo,
+		jobService:   jobService,
+		queue:        queue,
 	}
 }
 func (s *campaignService) Create(
@@ -64,11 +78,33 @@ func (s *campaignService) Create(
 	if err != nil {
 		return nil, err
 	}
+	contacts, err := s.contactRepo.FindAllByUserID(userID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	contactModels := make([]models.Contact, 0, len(contacts))
+	for _, contact := range contacts {
+		if contact != nil {
+			contactModels = append(contactModels, *contact)
+		}
+	}
+
+	err = s.jobService.CreateJobsForCampaign(
+		campaign.ID,
+		contactModels,
+	)
+
+	if err != nil {
+		return nil, err
+	}
 
 	return s.campaignRepo.FindByIDAndUserID(
 		campaign.ID,
 		userID,
 	)
+
 }
 func (s *campaignService) GetAll(
 	userID uint,

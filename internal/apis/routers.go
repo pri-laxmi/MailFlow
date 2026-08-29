@@ -25,6 +25,14 @@ func RegisterRoutes(router *gin.Engine, cfg *configs.Config, db *gorm.DB, jwtMan
 	templateService := service.NewTemplateService(templateRepo)
 	TemplateHandler := handler.NewTemplateHandler(templateService)
 
+	campaignRepo := repository.NewCampaignRepository(db)
+	campaignService := service.NewCampaignService(
+		campaignRepo,
+	)
+	campaignHandler := handler.NewCampaignHandler(
+		campaignService,
+	)
+
 	router.GET("/health", func(c *gin.Context) {
 		sqlDB, err := db.DB()
 		if err != nil {
@@ -74,4 +82,10 @@ func RegisterRoutes(router *gin.Engine, cfg *configs.Config, db *gorm.DB, jwtMan
 	protected.GET("/templates/:id", TemplateHandler.GetByID)
 	protected.PATCH("/templates/:id", TemplateHandler.Update)
 	protected.DELETE("/templates/:id", TemplateHandler.Delete)
+
+	protected.POST("/campaigns", campaignHandler.Create)
+	protected.GET("/campaigns", campaignHandler.GetAll)
+	protected.GET("/campaigns/:id", campaignHandler.GetByID)
+	protected.PATCH("/campaigns/:id", campaignHandler.Update)
+	protected.DELETE("/campaigns/:id", campaignHandler.Delete)
 }

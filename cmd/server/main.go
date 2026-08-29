@@ -25,7 +25,8 @@ func main() {
 		&models.User{},
 		&models.Contact{},
 		&models.Template{},
-		&models.Campaign{}); err != nil {
+		&models.Campaign{},
+		&models.Job{}); err != nil {
 		log.Fatalf("failed to migrate database: %v", err)
 	}
 	//setup router
