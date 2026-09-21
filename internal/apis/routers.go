@@ -7,12 +7,13 @@ import (
 	"github.com/pri-laxmi/MailFlow/configs"
 	"github.com/pri-laxmi/MailFlow/internal/handler"
 	"github.com/pri-laxmi/MailFlow/internal/middlewares"
+	"github.com/pri-laxmi/MailFlow/internal/queue"
 	"github.com/pri-laxmi/MailFlow/internal/repository"
 	"github.com/pri-laxmi/MailFlow/internal/service"
 	"github.com/pri-laxmi/MailFlow/internal/utils"
 )
 
-func RegisterRoutes(router *gin.Engine, cfg *configs.Config, db *gorm.DB, jwtManager *utils.JWTManager) {
+func RegisterRoutes(router *gin.Engine, cfg *configs.Config, db *gorm.DB, jwtManager *utils.JWTManager, jobQueue *queue.Queue) {
 	userRepo := repository.NewUserRepository(db)
 	authService := service.NewAuthService(userRepo, jwtManager)
 	authHandler := handler.NewAuthHandler(authService)
@@ -26,8 +27,14 @@ func RegisterRoutes(router *gin.Engine, cfg *configs.Config, db *gorm.DB, jwtMan
 	TemplateHandler := handler.NewTemplateHandler(templateService)
 
 	campaignRepo := repository.NewCampaignRepository(db)
+	jobRepo := repository.NewJobRepository(db)
+	jobService := service.NewJobService(jobRepo, jobQueue)
 	campaignService := service.NewCampaignService(
 		campaignRepo,
+		contactRepo,
+		jobRepo,
+		jobService,
+		jobQueue,
 	)
 	campaignHandler := handler.NewCampaignHandler(
 		campaignService,

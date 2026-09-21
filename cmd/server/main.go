@@ -7,7 +7,10 @@ import (
 	"github.com/pri-laxmi/MailFlow/internal/apis"
 	"github.com/pri-laxmi/MailFlow/internal/database"
 	"github.com/pri-laxmi/MailFlow/internal/models"
+	"github.com/pri-laxmi/MailFlow/internal/queue"
+	"github.com/pri-laxmi/MailFlow/internal/repository"
 	"github.com/pri-laxmi/MailFlow/internal/utils"
+	"github.com/pri-laxmi/MailFlow/internal/worker"
 )
 
 func main() {
@@ -24,13 +27,39 @@ func main() {
 	if err := db.AutoMigrate(
 		&models.User{},
 		&models.Contact{},
-		&models.Template{},
+		&models.Template{}); err != nil {
+		log.Fatalf("failed to migrate database: %v", err)
+	}
+	if err := db.Exec(`
+		DO $$
+		BEGIN
+			IF NOT EXISTS (
+				SELECT 1
+				FROM pg_constraint
+				WHERE conrelid = 'contacts'::regclass
+				  AND contype = 'p'
+			) THEN
+				ALTER TABLE "contacts" ADD CONSTRAINT "contacts_pkey" PRIMARY KEY ("id");
+			END IF;
+		END $$;
+	`).Error; err != nil {
+		log.Fatalf("failed to ensure contacts id is a primary key: %v", err)
+	}
+	if err := db.AutoMigrate(
 		&models.Campaign{},
 		&models.Job{}); err != nil {
 		log.Fatalf("failed to migrate database: %v", err)
 	}
+	jobQueue := queue.NewQueue(1000)
+	jobRepo := repository.NewJobRepository(db)
+	workerPool := worker.NewWorkerPool(
+		jobQueue,
+		jobRepo,
+		4, // number of workers
+	)
+	workerPool.Start()
 	//setup router
-	router := apis.SetRoutes(cfg, db, jwtManager)
+	router := apis.SetRoutes(cfg, db, jwtManager, jobQueue)
 	port := getPort(cfg)
 	log.Printf("server running on port %s", port)
 	if err := router.Run(":" + port); err != nil {
