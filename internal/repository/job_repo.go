@@ -40,6 +40,7 @@ func (r *jobRepository) FindByID(
 
 	err := r.db.
 		Preload("Campaign").
+		Preload("Campaign.Template").
 		Preload("Contact").
 		First(&job, id).Error
 

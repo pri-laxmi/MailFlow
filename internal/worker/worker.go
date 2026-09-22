@@ -1,10 +1,10 @@
 package worker
 
 import (
-	"fmt"
 	"log"
 	"sync"
 
+	"github.com/pri-laxmi/MailFlow/internal/email"
 	"github.com/pri-laxmi/MailFlow/internal/models"
 	"github.com/pri-laxmi/MailFlow/internal/queue"
 	"github.com/pri-laxmi/MailFlow/internal/repository"
@@ -13,14 +13,16 @@ import (
 type WorkerPool struct {
 	queue   *queue.Queue
 	jobRepo repository.JobRepository
+	sender  email.Sender
 	workers int
 	wg      sync.WaitGroup //wait for all the workers to finish during shutdown
 }
 
-func NewWorkerPool(queue *queue.Queue, jobRepo repository.JobRepository, workers int) *WorkerPool {
+func NewWorkerPool(queue *queue.Queue, jobRepo repository.JobRepository, sender email.Sender, workers int) *WorkerPool {
 	return &WorkerPool{
 		queue:   queue,
 		jobRepo: jobRepo,
+		sender:  sender,
 		workers: workers,
 	}
 }
@@ -65,6 +67,8 @@ func (p *WorkerPool) worker(id int) {
 		)
 	}
 }
+
+// change this
 func (p *WorkerPool) processJob(job *models.Job) error {
 	err := p.jobRepo.UpdateStatus(
 		job.ID,
@@ -75,13 +79,22 @@ func (p *WorkerPool) processJob(job *models.Job) error {
 	if err != nil {
 		return err
 	}
+	//load complete job info
+	fullJob, err := p.jobRepo.FindByID(job.ID)
+	if err != nil {
+		return err
+	}
+	err = p.sender.Send(fullJob)
+	if err != nil {
+		p.jobRepo.UpdateStatus(
+			job.ID,
+			"failed",
+			err.Error(),
+		)
+		return err
+	}
 
-	fmt.Printf(
-		"Processing email job %d for contact %d\n",
-		job.ID,
-		job.ContactID,
-	)
-
+	//mark as completed
 	err = p.jobRepo.UpdateStatus(
 		job.ID,
 		"completed",

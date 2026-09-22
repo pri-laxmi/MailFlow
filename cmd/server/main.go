@@ -6,6 +6,7 @@ import (
 	"github.com/pri-laxmi/MailFlow/configs"
 	"github.com/pri-laxmi/MailFlow/internal/apis"
 	"github.com/pri-laxmi/MailFlow/internal/database"
+	"github.com/pri-laxmi/MailFlow/internal/email"
 	"github.com/pri-laxmi/MailFlow/internal/models"
 	"github.com/pri-laxmi/MailFlow/internal/queue"
 	"github.com/pri-laxmi/MailFlow/internal/repository"
@@ -52,9 +53,11 @@ func main() {
 	}
 	jobQueue := queue.NewQueue(1000)
 	jobRepo := repository.NewJobRepository(db)
+	emailSender := email.NewMockSender()
 	workerPool := worker.NewWorkerPool(
 		jobQueue,
 		jobRepo,
+		emailSender,
 		4, // number of workers
 	)
 	workerPool.Start()
