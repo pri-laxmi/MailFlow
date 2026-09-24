@@ -3,6 +3,7 @@ package worker
 import (
 	"log"
 	"sync"
+	"time"
 
 	"github.com/pri-laxmi/MailFlow/internal/email"
 	"github.com/pri-laxmi/MailFlow/internal/models"
@@ -85,6 +86,16 @@ func (p *WorkerPool) processJob(job *models.Job) error {
 		return err
 	}
 	err = p.sender.Send(fullJob)
+	if err == nil {
+		p.jobRepo.UpdateStatus(
+			job.ID,
+			"completed",
+			"",
+		)
+		return err
+	}
+
+	//mark as failed
 	if err != nil {
 		p.jobRepo.UpdateStatus(
 			job.ID,
@@ -94,16 +105,33 @@ func (p *WorkerPool) processJob(job *models.Job) error {
 		return err
 	}
 
-	//mark as completed
-	err = p.jobRepo.UpdateStatus(
+	/*if err != nil {
+		return err
+	}*/
+	fullJob.RetryCount++
+	if fullJob.RetryCount > MaxRetries {
+		p.jobRepo.UpdateStatus(
+			job.ID,
+			"failed",
+			"max retries exceeded",
+		)
+		return err
+	}
+	err = p.jobRepo.UpdateRetryCount(
 		job.ID,
-		"completed",
-		"",
+		fullJob.RetryCount,
+		err.Error(),
 	)
-
 	if err != nil {
 		return err
 	}
+	delay := retryDelay(fullJob.RetryCount)
+	log.Printf(
+		"Retrying job %d after %v seconds (retry count: %d)")
+	time.Sleep(delay)
 
 	return nil
+}
+func retryDelay(retryCount int) time.Duration {
+	return time.Duration(1<<uint(retryCount-1)) * time.Second
 }

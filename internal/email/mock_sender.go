@@ -17,7 +17,7 @@ func NewMockSender() Sender {
 func (m *MockSender) Send(job *models.Job) error {
 
 	log.Printf(
-		"📧 Sending email to %s",
+		"Sending email to %s",
 		job.Contact.Email,
 	)
 
@@ -30,7 +30,7 @@ func (m *MockSender) Send(job *models.Job) error {
 	time.Sleep(1 * time.Second)
 
 	log.Printf(
-		"✅ Mock email sent successfully to %s",
+		"Mock email sent successfully to %s",
 		job.Contact.Email,
 	)
 

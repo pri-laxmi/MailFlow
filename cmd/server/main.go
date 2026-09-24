@@ -28,7 +28,10 @@ func main() {
 	if err := db.AutoMigrate(
 		&models.User{},
 		&models.Contact{},
-		&models.Template{}); err != nil {
+		&models.Template{},
+		&models.Campaign{},
+		&models.Job{},
+		&models.JobLog{}); err != nil {
 		log.Fatalf("failed to migrate database: %v", err)
 	}
 	if err := db.Exec(`

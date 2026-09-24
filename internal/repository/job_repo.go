@@ -18,6 +18,7 @@ type JobRepository interface {
 		status string,
 		errorMessage string,
 	) error
+	UpdateRetryCount(id uint, retryCount int, errorMessage string) error
 }
 
 type jobRepository struct {
@@ -74,6 +75,19 @@ func (r *jobRepository) UpdateStatus(
 		Where("id = ?", id).
 		Updates(map[string]interface{}{
 			"status":        status,
+			"error_message": errorMessage,
+		}).Error
+}
+func (r *jobRepository) UpdateRetryCount(
+	id uint,
+	retryCount int,
+	errorMessage string,
+) error {
+	return r.db.
+		Model(&models.Job{}).
+		Where("id = ?", id).
+		Updates(map[string]interface{}{
+			"retry_count":   retryCount,
 			"error_message": errorMessage,
 		}).Error
 }
