@@ -9,7 +9,8 @@ import (
 	"github.com/pri-laxmi/MailFlow/internal/models"
 	"github.com/pri-laxmi/MailFlow/internal/queue"
 	"github.com/pri-laxmi/MailFlow/internal/repository"
-)
+	"github.com/pri-laxmi/MailFlow/internal/service"
+)  
 
 type WorkerPool struct {
 	queue   *queue.Queue
@@ -17,6 +18,7 @@ type WorkerPool struct {
 	sender  email.Sender
 	workers int
 	wg      sync.WaitGroup //wait for all the workers to finish during shutdown
+	jobLogService service.JobLogService
 }
 
 func NewWorkerPool(queue *queue.Queue, jobRepo repository.JobRepository, sender email.Sender, workers int) *WorkerPool {
@@ -25,6 +27,7 @@ func NewWorkerPool(queue *queue.Queue, jobRepo repository.JobRepository, sender 
 		jobRepo: jobRepo,
 		sender:  sender,
 		workers: workers,
+		jobLogService: service.NewJobLogService(),
 	}
 }
 func (p *WorkerPool) Start() {
