@@ -11,6 +11,8 @@ type JobRepository interface {
 
 	FindByID(id uint) (*models.Job, error)
 
+	FindPending() ([]models.Job, error)
+
 	FindAllByCampaignID(campaignID uint) ([]models.Job, error)
 
 	UpdateStatus(
@@ -51,6 +53,16 @@ func (r *jobRepository) FindByID(
 
 	return &job, nil
 }
+
+func (r *jobRepository) FindPending() ([]models.Job, error) {
+	var jobs []models.Job
+	err := r.db.
+		Where("status = ?", "pending").
+		Order("created_at ASC").
+		Find(&jobs).Error
+	return jobs, err
+}
+
 func (r *jobRepository) FindAllByCampaignID(
 	campaignID uint,
 ) ([]models.Job, error) {

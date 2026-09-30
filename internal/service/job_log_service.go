@@ -6,7 +6,7 @@ import (
 )
 
 type JobLogService interface {
-	log(jobID uint, event string, message string) error
+	Log(jobID uint, event string, message string) error
 	GetLogs(jobID uint) ([]models.JobLog, error)
 }
 type jobLogService struct {
@@ -18,7 +18,7 @@ func NewJobLogService(repo repository.JobLogRepository) JobLogService {
 		repo: repo,
 	}
 }
-func (s *jobLogService) log(jobID uint, event string, message string) error {
+func (s *jobLogService) Log(jobID uint, event string, message string) error {
 	jobLog := &models.JobLog{
 		JobID:   jobID,
 		Event:   event,

@@ -56,14 +56,24 @@ func main() {
 	}
 	jobQueue := queue.NewQueue(1000)
 	jobRepo := repository.NewJobRepository(db)
+	jobLogRepo := repository.NewJobLogRepository(db)
 	emailSender := email.NewMockSender()
 	workerPool := worker.NewWorkerPool(
 		jobQueue,
 		jobRepo,
+		jobLogRepo,
 		emailSender,
 		4, // number of workers
 	)
 	workerPool.Start()
+	pendingJobs, err := jobRepo.FindPending()
+	if err != nil {
+		log.Fatalf("failed to load pending jobs: %v", err)
+	}
+	for i := range pendingJobs {
+		jobQueue.Push(&pendingJobs[i])
+	}
+	log.Printf("queued %d pending jobs for processing", len(pendingJobs))
 	//setup router
 	router := apis.SetRoutes(cfg, db, jwtManager, jobQueue)
 	port := getPort(cfg)
